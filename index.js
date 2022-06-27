@@ -1,11 +1,15 @@
+//rename app.js to index.js
+const { writeFile } = require('fs');
 const inquirer = require('inquirer');
+const genEmployeeInfo = require('./src/page-template');
+let employeeInfoArr = []
 
 //To do create prompt to enter the team manager’s name, employee ID, email address, and office number
 const managerInfo =() => { 
     return inquirer.prompt ([
         {
             type: 'input',
-            name: 'managerName',
+            name: 'name',
             message: "Enter team manager's name",
             validate: nameInput => {
                 if (nameInput) {
@@ -60,39 +64,66 @@ const managerInfo =() => {
 };
 
 const menuOptions =() => {
-    return inquirer.prompt([
+    inquirer.prompt([
         {
             type: 'list',
             name: 'employeeRole',
             message: ' What would you like to do?',
             choices: ['Engineer','Intern', 'Finish building team']
         } 
-    ])
+    ]).then(menuOptionsResp => {
+        console.log(menuOptionsResp.employeeRole)
+        const role = menuOptionsResp.employeeRole
+        if (role === 'Intern') {
+            getInternInfo().then(internData => {
+                const employeeData = {...internData, role:'Intern'}
+                employeeInfoArr.push(employeeData)
+                menuOptions()
+            })
+        } 
+        if (role === 'Engineer') {
+            getEngineerInfo().then(engineerData => {
+                const employeeData = {...engineerData, role:'Engineer'}
+                employeeInfoArr.push(employeeData)
+                menuOptions()
+            })
+        }
+        if (role === 'Finish building team') {
+            console.log('complete', employeeInfoArr)
+            writeFile('./dist/index.html', genEmployeeInfo(employeeInfoArr), (err) =>{
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log('File written successfully')
+                }
+            })
+        }
+    })
 };
 
 // menu with the option to add an engineer or an intern or to finish building team
-const menuOptionsResp = (menuOptions) => {
-    let employeeRole = ''
-    if (employeeRole === 'Engineer') {
-        return getEngineerInfo;
-    } if (employeeRole === 'Intern') {
-        return getInternInfo;
-    }else {
-        return menuOptions;
-    }
-};
+// const menuOptionsResp = (menuOptions) => {
+//     let employeeRole = ''
+//     if (employeeRole === 'Engineer') {
+//         return getEngineerInfo;
+//     } if (employeeRole === 'Intern') {
+//         return getInternInfo;
+//     }else {
+//         return menuOptions;
+//     }
+// };
 
 //prompt to enter the engineer’s name, ID, email, and GitHub username, and return to menu
 const getEngineerInfo = () => {
     return inquirer.prompt ([
         {
             type: 'input',
-            name: 'engineer',
+            name: 'name',
             message: 'Enter engineer name'
         },
         {
             type: 'input',
-            name: 'engineerId',
+            name: 'employeeId',
             message: "Enter engineer ID"
         },
         {
@@ -102,7 +133,7 @@ const getEngineerInfo = () => {
         },
         {
             type: 'input',
-            name: 'gitLink',
+            name: 'github',
             message: 'Enter GitHub username'
         },
     ])
@@ -113,12 +144,12 @@ const getInternInfo = () => {
     return inquirer.prompt ([
         {
             type: 'input',
-            name: 'intern',
+            name: 'name',
             message: 'Enter intern name',
         },
         {
             type: 'input',
-            name: 'internID',
+            name: 'employeeID',
             message: 'Enter intern ID'
         },
         {
@@ -135,6 +166,12 @@ const getInternInfo = () => {
 };
 
 managerInfo()
-.then(menuOptions)
-.then(menuOptionsResp)
+.then(managerData => {
+    console.log(managerData)
+    const employeeData = {...managerData, role:'Manager'}
+                employeeInfoArr.push(employeeData)
+    menuOptions()
+
+})
+
 
